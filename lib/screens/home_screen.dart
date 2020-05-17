@@ -12,86 +12,26 @@ class GitHubUsers extends StatefulWidget {
 
 class _GitHubUsersState extends State<GitHubUsers> {
 
-   
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  
  
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Users>>(
-      future: fetchUsers(context),
-      builder: (context, snapshot){
-        if (!snapshot.hasData){
-         return Scaffold(appBar: AppBar(
-           automaticallyImplyLeading: false,
-          elevation: 0,
-          title: Text(
-            'GitHub Users',
-            style: Theme.of(context).textTheme.headline.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 20
-              )
-          ),
-          backgroundColor: Colors.black87,
-         ),
-         body: Center(child: CircularProgressIndicator(
-           backgroundColor: Colors.black,
-         ))
-         );
-        }
-         return  Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          actions: <Widget>[
-            IconButton(
-              onPressed: (){
-                setState(() {
-                  fetchUsers(context);
-                });
-              },
-              icon:Icon(Icons.refresh,
-            color:Colors.white))
-          ],
-          title: Text(
-            'GitHub Users',
-            style: Theme.of(context).textTheme.headline.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 20
-              )
-          ),
-          backgroundColor: Colors.black87,
-        ),
+   
 
-        body: ListView.builder(
-            scrollDirection: Axis.vertical,
-            itemCount: snapshot.data.length,
-            itemBuilder: (context, index){
-              return ListTile(
-                  leading: _image(index, snapshot),
-                  title: _title(snapshot, index),
-                  subtitle: _location(snapshot, index),
-                  trailing: _button(index, snapshot),
-                  );
-                  }
-            
-            ),
-      );
-      }
-    );
+    return _onlineListView();
   }
 
   _image(int index, AsyncSnapshot snapshot){
-    return Container(
-      width:50,
-      height: 50,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-        image: DecorationImage(
-          image: NetworkImage(snapshot.data[index].imageUrl),
-          fit: BoxFit.cover
-        )
-      ),
+    return CircleAvatar(
+      radius: 25,
+      backgroundImage: NetworkImage(snapshot.data[index].imageUrl),
+    
     );
   }
 
@@ -128,7 +68,9 @@ class _GitHubUsersState extends State<GitHubUsers> {
   }
 
   Future<List<Users>> fetchUsers(context) async{
-    String url = 'https://api.github.com/users?language=flutter';
+    while (true){
+      try{
+        String url = 'https://api.github.com/users?language=flutter';
     var response = await http.get(url);
 
     if (response.statusCode == 200){
@@ -140,46 +82,15 @@ class _GitHubUsersState extends State<GitHubUsers> {
       return users;
     }
     else{
-      showDialog(
-        context: context,
-        builder: (context){
-          return AlertDialog(
-       title: Text('Error'),
-       titleTextStyle: TextStyle(
-         color: Colors.black,
-         fontSize:16
-       ),
-       content: Container(
-         height: 200,
-         width: 100,
-         child: Column(
-         mainAxisAlignment: MainAxisAlignment.center,
-         children: <Widget>[
-           Text('Could not launch url'),
-           SizedBox(height:40),
-           RaisedButton(
-             onPressed: ()=>setState(() {
-                  fetchUsers(context);
-                }),
-             color: Colors.black87,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)
-              ),
-              child: Text(
-                'Reload',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500
-                ),
-              ),
-              textColor: Colors.white,
-             )
-         ],
-       )),
-       contentTextStyle: TextStyle(color: Colors.black,
-       fontSize:22),
-     );});
       print('Error: ${response.statusCode}');
+      continue;
     }
+      }
+      catch(e){
+        print(e);
+      }
+    }
+    
     
   }
   Future<SingleUser> fetchUser(String login) async{
@@ -226,7 +137,7 @@ class _GitHubUsersState extends State<GitHubUsers> {
                     snap.data.location,
                     style: Theme.of(context).textTheme.caption.copyWith(color:Colors.grey[400]),
                   );}
-                  return Text('Unavailable',
+                  return Text('Fetching...',
                   style: Theme.of(context).textTheme.caption.copyWith(color:Colors.grey[400]),
                   );});
   }
@@ -256,4 +167,75 @@ class _GitHubUsersState extends State<GitHubUsers> {
   }
   }
 
+ Widget _onlineListView(){
+    return FutureBuilder<List<Users>>(
+      future: fetchUsers(context),
+      builder: (context, snapshot){
+        if (!snapshot.hasData){
+         return Scaffold(appBar: AppBar(
+           automaticallyImplyLeading: false,
+          elevation: 0,
+          title: Text(
+            'GitHub Users',
+            style: Theme.of(context).textTheme.headline.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 20
+              )
+          ),
+          backgroundColor: Colors.black87,
+         ),
+         body: Center(child: CircularProgressIndicator(
+           backgroundColor: Colors.black,
+         ))
+         );
+        }
+         return  Scaffold(
+        appBar: _appBar(),
+
+        body: ListView.builder(
+            scrollDirection: Axis.vertical,
+            itemCount: snapshot.data.length,
+            itemBuilder: (context, index){
+              return ListTile(
+                  leading: _image(index, snapshot),
+                  title: _title(snapshot, index),
+                  subtitle: _location(snapshot, index),
+                  trailing: _button(index, snapshot),
+                  );
+                  }
+            
+            ),
+      );
+      }
+    );
+  }
+
+  _appBar(){
+    return AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          actions: <Widget>[
+            IconButton(
+              onPressed: (){
+                setState(() {
+                  fetchUsers(context);
+                });
+              },
+              icon:Icon(Icons.refresh,
+            color:Colors.white))
+          ],
+          title: Text(
+            'GitHub Users',
+            style: Theme.of(context).textTheme.headline.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 20
+              )
+          ),
+          backgroundColor: Colors.black87,
+        );
+  }
+
+  
 }
